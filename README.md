@@ -4,9 +4,9 @@ It is a minimal implementation and is not intended for production use.
 ## Contents
 ap2/ap2_fixed_case.py: Generation, signing, and verification of AP2 authorizations (open/closed mandates), along with negative test cases.
 
-sui/dpp_recycle_vault/: Move smart contracts (passport, vault) and unit tests (17 tests).
+sui/dpp_recycle_vault/: Sui Move smart contracts (passport, vault) and unit tests (17 tests).
 
-sui/dpp_recycle_vault/tools/auth_to_sui_args.py: Converts AP2 outputs into arguments which are compatible with functions in Move contracts.
+sui/dpp_recycle_vault/tools/auth_to_sui_args.py: Converts AP2 outputs into arguments which are compatible with functions in contracts with Sui Move.
 
 ## Verified Environment
 Windows, PowerShell 7.6.7
