@@ -1,0 +1,11 @@
+{
+  "dpp_id": "dpp_0001",
+  "recipient_sui_address": "0x45fd4e4ad964cf405581b62f71cd537c715eb2f75548d30e94f8bdff029fa09b",
+  "amount_minor_usd": 2000,
+  "amount_usdc_base_units": 20000000,
+  "open_payment_hash": "wctPdxBDTXSgqzuRI293wR49rlXleNEOxvLBmVb3QW0",
+  "open_checkout_hash": "MWEIpfQqx8TZktg2QKuWl0umiV--LKgCoXwuwcC4riE",
+  "transaction_id": "_LRlbgRbmuZCzVZ5sRRD5uIkNLDenK-vmZflrJ4Ax_I",
+  "mandate_chain_sha256": "1G_7G46DELaYQgRIY4C9WfHQOK_AAzjwEm3A7T5bnwc",
+  "expires_at": 1792645055
+}
