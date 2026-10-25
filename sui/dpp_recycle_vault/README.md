@@ -23,7 +23,7 @@ Payout to the recycler happens only when the ProductPassport is `Recycled`.
     sui move build
     sui move test        # 17 tests
 
-## Publish to testnet (untested from here; run on your PC)
+## Publish to testnet
     sui client switch --env testnet
     sui client publish --gas-budget 200000000
 Note the package id, the shared `Vault` object id, and the `OracleCap` / `VerifierCap` object ids.
