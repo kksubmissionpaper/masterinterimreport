@@ -8,3 +8,5 @@ edition = "2024"         # edition = "legacy" to use legacy (pre-2024) Move
 
 # Read more about the package management system options:
 # https://docs.sui.io/guides/developer/packages/move-package-management
+[addresses]
+dpp_recycle_vault = "0x0"
