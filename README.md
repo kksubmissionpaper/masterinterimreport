@@ -8,6 +8,9 @@ sui/dpp_recycle_vault/: Sui Move smart contracts (passport, vault) and unit test
 
 sui/dpp_recycle_vault/tools/auth_to_sui_args.py: Converts AP2 outputs into arguments which are compatible with functions in contracts with Sui Move.
 
+sui/dpp_recycle_vault/sources/separation.move, tests/separation_tests.move, tools/gen_vectors.py, tools/run_report.py:
+Two-key authority-separation check (experimental). Both the mandate issuer's and the evaluator's ES256 signatures must verify on-chain before a DPP status changes.
+
 ## Verified Environment
 Windows, PowerShell 7.6.7
 
@@ -21,3 +24,5 @@ Sui CLI 1.82.1, Sui Testnet
 2. Run `sui move test` in sui/dpp_recycle_vault/ and verified that all 17 tests passed.
 
 3. Published the contracts to Sui Testnet and verified deposits and withdrawals using AP2 outputs (such as open_payment_hash).
+
+4. Generated test vectors with `python tools/gen_vectors.py`, ran `sui move test separation` in sui/dpp_recycle_vault/, and verified that all separation tests passed.
