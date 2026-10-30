@@ -64,17 +64,43 @@ fun run_v(
     attestation_sig: vector<u8>,
     now_ms: u64,
 ) {
+    run_ids(s, pid, MANDATE_ID, DPP_ID, recipient, amount, evidence, verdict,
+        mandate_sig, attestation_sig, now_ms);
+}
+
+/// Same as run_v, but mandate id and dpp id can be chosen by the test.
+fun run_ids(
+    s: &mut Scenario,
+    pid: ID,
+    mandate_id: vector<u8>,
+    dpp_id: vector<u8>,
+    recipient: address,
+    amount: u64,
+    evidence: vector<u8>,
+    verdict: u8,
+    mandate_sig: vector<u8>,
+    attestation_sig: vector<u8>,
+    now_ms: u64,
+) {
     s.next_tx(SUBMITTER);
     let mut reg = s.take_shared<Registry>();
     let mut dpp = s.take_shared_by_id<DppState>(pid);
     let c = clock_at(s, now_ms);
     separation::execute(
-        &mut reg, &mut dpp, MANDATE_ID, DPP_ID, recipient, amount, EXPIRES,
+        &mut reg, &mut dpp, mandate_id, dpp_id, recipient, amount, EXPIRES,
         evidence, verdict, mandate_sig, attestation_sig, &c,
     );
     c.destroy_for_testing();
     ts::return_shared(reg);
     ts::return_shared(dpp);
+}
+
+/// A different 32-byte value (first byte inverted).
+fun differs(v: vector<u8>): vector<u8> {
+    let mut x = v;
+    let b = *x.borrow(0);
+    *x.borrow_mut(0) = b ^ 0xff;
+    x
 }
 
 // 1. both signatures valid -> Recycled
@@ -169,5 +195,37 @@ fun mandate_cannot_be_used_twice() {
 fun registry_rejects_identical_keys() {
     let mut s = ts::begin(ADMIN);
     separation::new_registry(EVAL_PK, EVAL_PK, s.ctx());
+    s.end();
+}
+
+// 11. the dpp_id argument does not match the DPP object (check runs before
+//     the signature checks, so the valid signatures are irrelevant here)
+#[test, expected_failure(abort_code = separation::EWrongPassport)]
+fun wrong_dpp_id_is_rejected() {
+    let (mut s, pid) = setup();
+    run_ids(&mut s, pid, MANDATE_ID, differs(DPP_ID), RECIPIENT, AMOUNT, EVIDENCE, 1,
+        MANDATE_SIG_OK, ATTEST_SIG_OK, 5_000);
+    s.end();
+}
+
+// 12. identifiers must be exactly 32 bytes
+#[test, expected_failure(abort_code = separation::EBadLength)]
+fun short_mandate_id_is_rejected() {
+    let (mut s, pid) = setup();
+    let mut short = MANDATE_ID;
+    short.pop_back();
+    run_ids(&mut s, pid, short, DPP_ID, RECIPIENT, AMOUNT, EVIDENCE, 1,
+        MANDATE_SIG_OK, ATTEST_SIG_OK, 5_000);
+    s.end();
+}
+
+// 13. a DPP that is already Recycled cannot be recycled again, even with a
+//     NEW mandate id (a replayed id would hit EAlreadyUsed first)
+#[test, expected_failure(abort_code = separation::EBadState)]
+fun recycled_dpp_cannot_be_recycled_again() {
+    let (mut s, pid) = setup();
+    run(&mut s, pid, RECIPIENT, AMOUNT, EVIDENCE, MANDATE_SIG_OK, ATTEST_SIG_OK, 5_000);
+    run_ids(&mut s, pid, differs(MANDATE_ID), DPP_ID, RECIPIENT, AMOUNT, EVIDENCE, 1,
+        MANDATE_SIG_OK, ATTEST_SIG_OK, 6_000);
     s.end();
 }

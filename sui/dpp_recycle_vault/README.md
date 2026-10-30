@@ -32,13 +32,13 @@ Payout to the recycler happens only when the ProductPassport is `Recycled`.
 
 ## Test (no network needed beyond dependency fetch)
     sui move build
-    sui move test        # 28 tests (17 vault/passport + 11 separation)
+    sui move test        # 31 tests (17 vault/passport + 14 separation)
 
 ### Authority-separation check
 Test vectors (fresh keys and signatures) are generated into `tests/separation_tests.move`:
 
     python tools/gen_vectors.py      # needs: pip install cryptography
-    sui move test separation         # 11 tests
+    sui move test separation         # 14 tests
     python tools/run_report.py       # prints PASS - ACCEPTED / PASS - REJECTED (error code) per test
 
 A `PASS` on a test marked `expected_failure` means the call was rejected with the expected abort code.

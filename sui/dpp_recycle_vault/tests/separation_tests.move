@@ -14,18 +14,18 @@ const OTHER: address = @0xE;
 const AMOUNT: u64 = 20_000_000;
 const EXPIRES: u64 = 100_000;
 
-const EVAL_PK: vector<u8> = x"021134717408c8f96b3c810ec2be407e4e4bfd5bd46a8ddea921e0f5810177b709";
-const ISSUER_PK: vector<u8> = x"02a00d09407d13d88907a00f0ba4db37640bb3e0fb475eb366b01733ffea3462fc";
+const EVAL_PK: vector<u8> = x"02cd1b705da540aabc391a5f1cd83aecffdf24849a52739f154571bcb4a221d4b4";
+const ISSUER_PK: vector<u8> = x"02beddf3bdfc9677c538e0613bbb7b7bb26d4028a4df0030e6bdd7b8d5d047370d";
 const DPP_ID: vector<u8> = x"a78e51ffecac89d6e644916a676fb1215a1f6e9d8f338fc933ffc7b9bb9c5371";
 const MANDATE_ID: vector<u8> = x"c1338d38af7f3029288cd8663f4d242aa45a81865f6f7a376f204638debc592e";
 const EVIDENCE: vector<u8> = x"9e9e22a4e2997c86cb070632cd1e19a06bc09fe5828122d99966e39a124225f9";
 const OTHER_EVIDENCE: vector<u8> = x"46d8b4c4ff77268e3302d3add7fa570e20b6bd36d73aac56a79e9b32d2dae59e";
 
-const MANDATE_SIG_OK: vector<u8> = x"b572896974e7ad59c5484567d6efd0b4947c851be81982165bbb044085d46228045cfc9d8433bb034c5beba09179def441abee78eb1114b96531fb22f1099eb7";
-const ATTEST_SIG_OK: vector<u8> = x"29ab95633055899bf9ed901f1299d683f10682b6fd05f698209a8ed5474b458a0add29597dc0e485f5c8eea6fa048568f484e1c95f944b7543ae469a772d30fe";
-const MANDATE_SIG_BY_EVALUATOR: vector<u8> = x"700e05657abee2f4444d1b2ca94662ece1241ea5450f73238b9e943bd716e1017f2290771e7c0b7247045bb098f52be60310c17e0c589232349443c5ff3d795b";
-const ATTEST_SIG_BY_ISSUER: vector<u8> = x"d9fc35366169eb0a1ae3afaeeb4be6dbd665222582de9e206dbec4e021a6c6c77c885f28b151c1d44a3ed46faa529c1200f682237f17cecdc69f28fb37d98d4c";
-const ATTEST_SIG_REJECTED: vector<u8> = x"6817e26c773c621f35adbf0c5ea75a73a5d952851497c04844b1dddbbc4a4791672d2f8b3b2ae3ae2041ffa925cfa340f19e9c0ed7c2bca966040f9ab31c1249";
+const MANDATE_SIG_OK: vector<u8> = x"ca740e9c31785713a1f71c8139042b7fe9d55cef556bb88867df7f1dcc426508101358c7a313b871287962258b6d262bcf7584d6b8e3e96b12f933fae94b2a60";
+const ATTEST_SIG_OK: vector<u8> = x"d02d5048e3a6ccf81cb33e601a70377e301e4128e2649fe7d9074e9351283f521d23480dac81b0242351e65b928aece40247feaf1bc830c41e3316f93579a1ba";
+const MANDATE_SIG_BY_EVALUATOR: vector<u8> = x"23f0b26f4709a92b2f3c44a2e99c2955c70da6c312afd9d339e1b904f59e72df673ccd172f3f28e14908689016b4ab9ce55c131a80181d26a03fd70c70c6dd00";
+const ATTEST_SIG_BY_ISSUER: vector<u8> = x"33230adeb7efcada75341ae497011e15d0482be0d8a8b58a67278cd61e7f9c9f5971d76b1b6dd289b06bf73ddb27034105016e0edc72be3a64694dbb1f4ce607";
+const ATTEST_SIG_REJECTED: vector<u8> = x"c3c2239456335dc2851247951aa08fbd2f4d7357a0d213c2082b1363f12df18077169485df02cbb8ddbf54be6cda9e04fa329c3a83b099eca94db9e032f5d24b";
 
 fun clock_at(s: &mut Scenario, ms: u64): Clock {
     let mut c = clock::create_for_testing(s.ctx());
@@ -64,17 +64,43 @@ fun run_v(
     attestation_sig: vector<u8>,
     now_ms: u64,
 ) {
+    run_ids(s, pid, MANDATE_ID, DPP_ID, recipient, amount, evidence, verdict,
+        mandate_sig, attestation_sig, now_ms);
+}
+
+/// Same as run_v, but mandate id and dpp id can be chosen by the test.
+fun run_ids(
+    s: &mut Scenario,
+    pid: ID,
+    mandate_id: vector<u8>,
+    dpp_id: vector<u8>,
+    recipient: address,
+    amount: u64,
+    evidence: vector<u8>,
+    verdict: u8,
+    mandate_sig: vector<u8>,
+    attestation_sig: vector<u8>,
+    now_ms: u64,
+) {
     s.next_tx(SUBMITTER);
     let mut reg = s.take_shared<Registry>();
     let mut dpp = s.take_shared_by_id<DppState>(pid);
     let c = clock_at(s, now_ms);
     separation::execute(
-        &mut reg, &mut dpp, MANDATE_ID, DPP_ID, recipient, amount, EXPIRES,
+        &mut reg, &mut dpp, mandate_id, dpp_id, recipient, amount, EXPIRES,
         evidence, verdict, mandate_sig, attestation_sig, &c,
     );
     c.destroy_for_testing();
     ts::return_shared(reg);
     ts::return_shared(dpp);
+}
+
+/// A different 32-byte value (first byte inverted).
+fun differs(v: vector<u8>): vector<u8> {
+    let mut x = v;
+    let b = *x.borrow(0);
+    *x.borrow_mut(0) = b ^ 0xff;
+    x
 }
 
 // 1. both signatures valid -> Recycled
@@ -169,5 +195,37 @@ fun mandate_cannot_be_used_twice() {
 fun registry_rejects_identical_keys() {
     let mut s = ts::begin(ADMIN);
     separation::new_registry(EVAL_PK, EVAL_PK, s.ctx());
+    s.end();
+}
+
+// 11. the dpp_id argument does not match the DPP object (check runs before
+//     the signature checks, so the valid signatures are irrelevant here)
+#[test, expected_failure(abort_code = separation::EWrongPassport)]
+fun wrong_dpp_id_is_rejected() {
+    let (mut s, pid) = setup();
+    run_ids(&mut s, pid, MANDATE_ID, differs(DPP_ID), RECIPIENT, AMOUNT, EVIDENCE, 1,
+        MANDATE_SIG_OK, ATTEST_SIG_OK, 5_000);
+    s.end();
+}
+
+// 12. identifiers must be exactly 32 bytes
+#[test, expected_failure(abort_code = separation::EBadLength)]
+fun short_mandate_id_is_rejected() {
+    let (mut s, pid) = setup();
+    let mut short = MANDATE_ID;
+    short.pop_back();
+    run_ids(&mut s, pid, short, DPP_ID, RECIPIENT, AMOUNT, EVIDENCE, 1,
+        MANDATE_SIG_OK, ATTEST_SIG_OK, 5_000);
+    s.end();
+}
+
+// 13. a DPP that is already Recycled cannot be recycled again, even with a
+//     NEW mandate id (a replayed id would hit EAlreadyUsed first)
+#[test, expected_failure(abort_code = separation::EBadState)]
+fun recycled_dpp_cannot_be_recycled_again() {
+    let (mut s, pid) = setup();
+    run(&mut s, pid, RECIPIENT, AMOUNT, EVIDENCE, MANDATE_SIG_OK, ATTEST_SIG_OK, 5_000);
+    run_ids(&mut s, pid, differs(MANDATE_ID), DPP_ID, RECIPIENT, AMOUNT, EVIDENCE, 1,
+        MANDATE_SIG_OK, ATTEST_SIG_OK, 6_000);
     s.end();
 }
